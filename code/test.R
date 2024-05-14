@@ -190,7 +190,7 @@ for (i in seq_along(filenames)) {
 # Combine the results into a single data structure 
 combined_result <- Reduce(function(x, y) merge(x, y, by = c("lon_var", "lat_var"), all.x = TRUE), result_list)
 
-##calculate mean by month
+##calculate mean by year
 annual_mean_2 <- melt(setDT(combined_result), id.vars = c("lon_var", "lat_var"), variable.name = "date") %>%
   separate(date, into = c("year", "month", "date"), sep = "-") %>%
   group_by(lon_var, lat_var, month) %>%
