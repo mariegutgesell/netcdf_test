@@ -128,8 +128,6 @@ for (i in seq_along(filenames)) {
   # Convert the list of monthly discharge values into a matrix
   monthly_discharge_matrix <- do.call(cbind, monthly_discharge)
   
-  # Add lat and long to mean monthly discharge matrix
-  monthly_discharge_matrix <- cbind(lon_var, lat_var, monthly_discharge_matrix)
   
   # Store the result in the result list
   result_list[[i]] <- monthly_discharge_matrix
@@ -138,7 +136,20 @@ for (i in seq_along(filenames)) {
   nc_close(nc)
 }
 
-# Combine the results into a single data structure if needed
-# For example, if you want to combine the results into a single list:
+# Combine the results into a single data structure 
 combined_result <- do.call(cbind, result_list)
+# Add lat and long to mean monthly discharge matrix
+combined_result <- cbind(lon_var, lat_var, combined_result)
+
+##Calculate monthly mean across all years --------------
+library(data.table)
+combined_result <- as.data.frame(combined_result)
+
+annual_mean <- melt(setDT(combined_result), id.vars = c("lon_var", "lat_var"), variable.name = "date") %>%
+  separate(date, into = c("year", "month"), sep = "-") %>%
+  group_by(lon_var, lat_var, month) %>%
+  summarise_at(vars(value), list(mean_discharge = mean))
+
+
+
 
