@@ -140,5 +140,5 @@ for (i in seq_along(filenames)) {
 
 # Combine the results into a single data structure if needed
 # For example, if you want to combine the results into a single list:
-combined_result <- do.call(rbind, result_list)
+combined_result <- do.call(cbind, result_list)
 
