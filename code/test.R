@@ -151,5 +151,48 @@ annual_mean <- melt(setDT(combined_result), id.vars = c("lon_var", "lat_var"), v
   summarise_at(vars(value), list(mean_discharge = mean))
 
 
+##Trying to calculate monthly mean across all years in one step -----------
+filenames <- list.files("data", pattern = "\\.nc$", full.names = TRUE)
 
+# Initialize an empty list to store the results for each file
+result_list <- vector("list", length(filenames))
+
+# Loop over each .nc file
+for (i in seq_along(filenames)) {
+  nc_file <- filenames[i]
+  
+  # Open the .nc file
+  nc <- nc_open(nc_file, auto_GMT = TRUE)
+  
+  # Extract variables for latitude, longitude, and discharge from the netCDF file
+  lon_var <- ncvar_get(nc, varid = "lon")
+  lat_var <- ncvar_get(nc, varid = "lat")
+  q_var <- ncvar_get(nc, varid = "q")
+  year_var <- ncvar_get(nc, varid = "year")
+  month_var <- ncvar_get(nc, varid = "month")
+  day_var <- ncvar_get(nc, varid = "day")
+  
+  # Create string of dates to add as column headers
+  date_strings <- paste(year_var, month_var, day_var, sep = "-")
+  
+  # Create matrix with each day as column and matrix of discharge
+  q_var <- as.matrix(q_var)
+  colnames(q_var) <- date_strings
+  
+  ##
+  result_list[[i]] <- as.data.frame(cbind(lon_var, lat_var, q_var))
+  
+  
+  # Close the .nc file
+  nc_close(nc)
+}
+
+# Combine the results into a single data structure 
+combined_result <- Reduce(function(x, y) merge(x, y, by = c("lon_var", "lat_var"), all.x = TRUE), result_list)
+
+##calculate mean by month
+annual_mean_2 <- melt(setDT(combined_result), id.vars = c("lon_var", "lat_var"), variable.name = "date") %>%
+  separate(date, into = c("year", "month", "date"), sep = "-") %>%
+  group_by(lon_var, lat_var, month) %>%
+  summarise_at(vars(value), list(mean_discharge = mean))
 
